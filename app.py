@@ -1,6 +1,6 @@
 from flask import Flask, request, send_file, render_template, jsonify
-import edge_tts
-import asyncio
+import subprocess
+import sys
 import os
 import uuid
 
@@ -23,14 +23,16 @@ def generate_tts():
     filepath = os.path.join('/tmp', filename) 
 
     try:
-        # Menggunakan Native API Python (Sangat stabil untuk Cloud Server)
-        async def run_tts():
-            communicate = edge_tts.Communicate(text, voice)
-            await communicate.save(filepath)
+        # Panggil edge-tts melalui core system executable langsung
+        command = [sys.executable, '-m', 'edge_tts', '--voice', voice, '--text', text, '--write-media', filepath]
         
-        asyncio.run(run_tts())
+        # Jalankan dan tangkap log jika gagal
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
         
         return send_file(filepath, as_attachment=True, download_name=f"voice-{voice}.mp3")
+    except subprocess.CalledProcessError as e:
+        # Ini akan melemparkan log asli dari mesin jika gagal
+        return jsonify({"error": f"Sistem Error: {e.stderr}"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

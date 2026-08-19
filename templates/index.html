@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Premium AI Voice Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -19,12 +20,8 @@
                         <option value="id-ID-GadisNeural">👩🏻 Gadis (Wanita Indonesia)</option>
                     </optgroup>
                     <optgroup label="English (US)">
-                        <option value="en-US-ChristopherNeural">👨🏼 Christopher (Pria Bule)</option>
-                        <option value="en-US-JennyNeural">👩🏼 Jenny (Wanita Bule)</option>
-                    </optgroup>
-                    <optgroup label="Jepang">
-                        <option value="ja-JP-KeitaNeural">👨🏻‍🎤 Keita (Pria Anime)</option>
-                        <option value="ja-JP-NanamiNeural">👩🏻‍🎤 Nanami (Wanita Anime)</option>
+                        <option value="en-US-ChristopherNeural">👨🏼 Christopher (Bule)</option>
+                        <option value="en-US-JennyNeural">👩🏼 Jenny (Bule)</option>
                     </optgroup>
                 </select>
             </div>
@@ -46,11 +43,16 @@
                 Download MP3
             </a>
         </div>
+        
+        <!-- Kotak Error (Akan muncul jika gagal) -->
+        <div id="error-area" class="mt-4 hidden p-3 bg-red-900 border border-red-500 rounded-lg text-sm text-red-200 break-words">
+        </div>
     </div>
 
     <script>
         const btnGenerate = document.getElementById('btn-generate');
         const resultArea = document.getElementById('result-area');
+        const errorArea = document.getElementById('error-area');
         const audioPlayer = document.getElementById('audio-player');
         const downloadLink = document.getElementById('download-link');
 
@@ -63,6 +65,7 @@
             btnGenerate.innerText = "Memproses Suara AI...";
             btnGenerate.disabled = true;
             resultArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
 
             try {
                 const response = await fetch('/generate', {
@@ -71,7 +74,10 @@
                     body: JSON.stringify({ text, voice })
                 });
 
-                if (!response.ok) throw new Error("Gagal generate suara");
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Gagal menghubungi server");
+                }
 
                 const blob = await response.blob();
                 const audioUrl = URL.createObjectURL(blob);
@@ -83,7 +89,9 @@
                 resultArea.classList.remove('hidden');
                 audioPlayer.play();
             } catch (error) {
-                alert("Error: " + error.message);
+                // Tampilkan log error asli ke layar
+                errorArea.innerText = "Error Detail: " + error.message;
+                errorArea.classList.remove('hidden');
             } finally {
                 btnGenerate.innerText = "Generate Suara 🚀";
                 btnGenerate.disabled = false;
