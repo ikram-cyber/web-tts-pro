@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, render_template, jsonify
-import subprocess
+import edge_tts
+import asyncio
 import os
 import uuid
 
@@ -22,11 +23,14 @@ def generate_tts():
     filepath = os.path.join('/tmp', filename) 
 
     try:
-        command = ['edge-tts', '--voice', voice, '--text', text, '--write-media', filepath]
-        subprocess.run(command, check=True)
+        # Menggunakan Native API Python (Sangat stabil untuk Cloud Server)
+        async def run_tts():
+            communicate = edge_tts.Communicate(text, voice)
+            await communicate.save(filepath)
         
-        response = send_file(filepath, as_attachment=True, download_name=f"voice-{voice}.mp3")
-        return response
+        asyncio.run(run_tts())
+        
+        return send_file(filepath, as_attachment=True, download_name=f"voice-{voice}.mp3")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
