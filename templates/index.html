@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium AI Voice Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6 text-center text-blue-400">Premium TTS (Edge AI)</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Pilih Pengisi Suara</label>
+                <select id="voice-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none text-white">
+                    <optgroup label="Indonesia">
+                        <option value="id-ID-ArdiNeural">👨🏻 Ardi (Pria Indonesia)</option>
+                        <option value="id-ID-GadisNeural">👩🏻 Gadis (Wanita Indonesia)</option>
+                    </optgroup>
+                    <optgroup label="English (US)">
+                        <option value="en-US-ChristopherNeural">👨🏼 Christopher (Pria Bule)</option>
+                        <option value="en-US-JennyNeural">👩🏼 Jenny (Wanita Bule)</option>
+                    </optgroup>
+                    <optgroup label="Jepang">
+                        <option value="ja-JP-KeitaNeural">👨🏻‍🎤 Keita (Pria Anime)</option>
+                        <option value="ja-JP-NanamiNeural">👩🏻‍🎤 Nanami (Wanita Anime)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Teks (Script Video)</label>
+                <textarea id="text" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Masukkan naskah di sini..."></textarea>
+            </div>
+
+            <button id="btn-generate" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                Generate Suara 🚀
+            </button>
+        </div>
+
+        <div id="result-area" class="mt-6 hidden space-y-4 pt-6 border-t border-gray-700">
+            <p class="text-sm text-green-400 text-center font-bold">Berhasil! Silakan putar atau download:</p>
+            <audio id="audio-player" controls class="w-full rounded-lg"></audio>
+            <a id="download-link" class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                Download MP3
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const btnGenerate = document.getElementById('btn-generate');
+        const resultArea = document.getElementById('result-area');
+        const audioPlayer = document.getElementById('audio-player');
+        const downloadLink = document.getElementById('download-link');
+
+        btnGenerate.addEventListener('click', async () => {
+            const text = document.getElementById('text').value.trim();
+            const voice = document.getElementById('voice-select').value;
+
+            if (!text) return alert("Isi teksnya dulu bos!");
+
+            btnGenerate.innerText = "Memproses Suara AI...";
+            btnGenerate.disabled = true;
+            resultArea.classList.add('hidden');
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice })
+                });
+
+                if (!response.ok) throw new Error("Gagal generate suara");
+
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+
+                audioPlayer.src = audioUrl;
+                downloadLink.href = audioUrl;
+                downloadLink.download = `voice-${voice}-${Date.now()}.mp3`;
+
+                resultArea.classList.remove('hidden');
+                audioPlayer.play();
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                btnGenerate.innerText = "Generate Suara 🚀";
+                btnGenerate.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
